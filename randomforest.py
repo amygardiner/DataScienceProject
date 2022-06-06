@@ -18,8 +18,10 @@ from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_auc_score #inkeeping with literature
+import warnings
+warnings.simplefilter("ignore", UserWarning)
 
 filepath="/Users/amygardiner/Documents/University/PGD/Proj/Data/Paid_labelled/2013_Pakistan_eq/2013_Pakistan_eq_CF_labeled_data.tsv"
 
@@ -60,8 +62,7 @@ X_train = mlb.transform(train_tweets)
 X_test = mlb.transform(test_tweets)
 
 
-regressor = RandomForestRegressor(random_state = 0)
-regressor.fit(X_train, train_labels)
-y_pred = regressor.predict(X_test)
+clf = RandomForestClassifier(random_state = 0)
+clf.fit(X_train, train_labels)
+print('ROC Score:', roc_auc_score(test_labels, clf.predict_proba(X_test),multi_class='ovr'))
 
-print('ROC Score:', roc_auc_score(test_labels, y_pred,multi_class='ovr'))
