@@ -20,47 +20,41 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import roc_auc_score #inkeeping with literature
 
-class LemmaTokenizer(object):
-    
-    def __init__(self):
-        self.wnl = WordNetLemmatizer()
-        
-    def __call__(self, tweets):
-        return [self.wnl.lemmatize(self.wnl.lemmatize(self.wnl.lemmatize(tok, pos='n'), pos='v'), pos='a') for tok in word_tokenize(tweets)]
-    
-vectorizer = CountVectorizer(tokenizer=LemmaTokenizer())
-
-
 filepath="/Users/amygardiner/Documents/University/PGD/Proj/Data/Paid_labelled/2013_Pakistan_eq/2013_Pakistan_eq_CF_labeled_data.tsv"
 
 df = pd.read_csv(filepath, sep="\t")
 df['tweet_id'] = df['tweet_id'].str.replace("'"," ")
 
-example_sent=df['tweet_text'][0]
+tweets=[]
+labels=df['label']
 
-sent_processed=re.sub("@[A-Za-z0-9_]+","",example_sent) #regular expression to remove mentions
-sent_processed=re.sub(r'http\S+', '', sent_processed) #regex to remove URLs
-sent_processed=re.sub('RT', '', sent_processed) #removing RT
-sent_processed=re.sub("[^\w\s]", '', sent_processed) #removing punctuation
-stop_words = set(stopwords.words('english'))
-word_tokens = word_tokenize(sent_processed)
-
-filtered_sentence = [w for w in word_tokens if not w.lower() in stop_words]
+for i in df['tweet_text']:
+    sent_processed=re.sub("@[A-Za-z0-9_]+","",i) #regular expression to remove mentions
+    sent_processed=re.sub(r'http\S+', '', sent_processed) #regex to remove URLs
+    sent_processed=re.sub('RT', '', sent_processed) #removing RT
+    sent_processed=re.sub("[^\w\s]", '', sent_processed) #removing punctuation
+    stop_words = set(stopwords.words('english'))
+    word_tokens = word_tokenize(sent_processed)
+    
+    filtered_sentence = [w for w in word_tokens if not w.lower() in stop_words]
+    filtered_sentence = []
   
-filtered_sentence = []
-  
-for w in word_tokens:
-    if w not in stop_words:
-        filtered_sentence.append(w)
+    for w in word_tokens:
+        if w not in stop_words:
+            filtered_sentence.append(w)
+    tweets.append(filtered_sentence)      
 
-print(example_sent)       
-print(word_tokens)
-print(filtered_sentence)
+train_tweets, test_tweets, train_labels, test_labels = train_test_split(tweets, labels, test_size = 0.20, random_state = 0)
 
+from itertools import chain
+train_tweets=list(chain.from_iterable(train_tweets))
 
 #vectorizer.fit(train_tweets)
 #X_train = vectorizer.transform(train_tweets)
 #X_test = vectorizer.transform(test_tweets)
+
+vectorizer = CountVectorizer()
+X_train = vectorizer.fit_transform(train_tweets)
 
 """
 
