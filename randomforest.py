@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jun  6 14:07:49 2022
+Created on Mon Jul 11 10:28:54 2022
+@author: amygardiner
 
 Random forest baseline with the crisis NLP datasets
 RF code from https://github.com/nxs5899/Multi-Class-Text-Classification----Random-Forest/blob/master/multi-class-classifier.ipynb
 ROC code used from https://github.com/vinyluis/Articles/blob/main/ROC%20Curve%20and%20ROC%20AUC/ROC%20Curve%20-%20Multiclass.ipynb
-
-@author: amygardiner
 """
 
 #nltk.download('stopwords')
@@ -15,6 +14,7 @@ import re
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
@@ -23,10 +23,9 @@ from sklearn.metrics import roc_auc_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.pipeline import Pipeline
-  
+from sklearn.pipeline import Pipeline  
     
-filepath="/Users/amygardiner/Documents/University/PGD/Proj/Data/Paid_labelled/2013_Pakistan_eq/2013_Pakistan_eq_CF_labeled_data.tsv"
+filepath="/Users/amygardiner/Documents/University/PGD/Proj/Data/Paid_labelled/2015_Nepal_Earthquake_en/2015_Nepal_Earthquake_en_CF_labeled_data.tsv"
 
 df = pd.read_csv(filepath, sep="\t")
 df['tweet_id'] = df['tweet_id'].str.replace("'"," ")
@@ -37,15 +36,17 @@ df=df.applymap(lambda s: numericalmap.get(s) if s in numericalmap else s)
 
 train_tweets, test_tweets, y_train, y_test = train_test_split(df['tweet_text'], df['label'], test_size = 0.20, random_state = 0)
 
-c = ['moccasin', 'slategray', 'thistle', 'indianred', 'darkseagreen', 'lightsteelblue', 'khaki', 'powderblue', 'lightpink']
-df.groupby('label').tweet_text.count().plot.bar(ylim=0,color=c,title='Distribution of topic classes')
+bins = np.arange(11) - 0.5
+plt.hist(df['label'],bins, density=True)
+plt.xticks(range(10))
+plt.xlim([0, 10])
+plt.title('Distribution of topic classes')
 plt.show()
 
 nltk.download('stopwords')
 stemmer = PorterStemmer()
 words = stopwords.words("english")
 df['cleaned'] = df['tweet_text'].apply(lambda x: " ".join([stemmer.stem(i) for i in re.sub("[^a-zA-Z]", " ", x).split() if i not in words]).lower())
-
 
 vectorizer = TfidfVectorizer(min_df= 3, stop_words="english", sublinear_tf=True, norm='l2', ngram_range=(1, 2))
 final_features = vectorizer.fit_transform(df['cleaned']).toarray()
@@ -77,6 +78,7 @@ for i in range(len(classes)):
         roc_auc_ovr.append(roc_auc_score(df_aux['class'], df_aux['prob']))
     except ValueError:
         pass
+    
     df_aux = df_aux.reset_index(drop = True)
       
 print(f'ROC scores: {roc_auc_ovr}')
