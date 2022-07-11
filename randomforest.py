@@ -14,7 +14,6 @@ import re
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import PercentFormatter
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
@@ -37,7 +36,7 @@ df=df.applymap(lambda s: numericalmap.get(s) if s in numericalmap else s)
 train_tweets, test_tweets, y_train, y_test = train_test_split(df['tweet_text'], df['label'], test_size = 0.20, random_state = 0)
 
 bins = np.arange(11) - 0.5
-plt.hist(df['label'],bins, density=True)
+counts, bins, bars = plt.hist(df['label'],bins, density=True)
 plt.xticks(range(10))
 plt.xlim([0, 10])
 plt.title('Distribution of topic classes')
