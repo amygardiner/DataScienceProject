@@ -13,7 +13,8 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 
-data = pd.read_csv("alldata.txt", sep="\t")
+filepath="/Users/amygardiner/Documents/University/PGD/Proj/Data/Paid_labelled/alldata.txt"
+data = pd.read_csv(filepath, sep="\t")
 
 
 
@@ -80,6 +81,8 @@ class ReviewsDataset(Dataset):
 train_ds = ReviewsDataset(X_train, y_train)
 valid_ds = ReviewsDataset(X_valid, y_valid)
 
+metricsfile = open('slowLSTMmetrics.txt', 'w')
+
 def train_model(model, epochs=10, lr=0.001):
     parameters = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = torch.optim.Adam(parameters, lr=lr)
@@ -99,7 +102,8 @@ def train_model(model, epochs=10, lr=0.001):
             total += y.shape[0]
         val_loss, val_acc, val_rmse = validation_metrics(model, val_dl)
         if i % 5 == 1:
-            print("train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f" % (sum_loss/total, val_loss, val_acc, val_rmse))
+            s=("train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f \n" % (sum_loss/total, val_loss, val_acc, val_rmse))
+            metricsfile.write(s)
 
 def validation_metrics (model, valid_dl):
     model.eval()
@@ -142,4 +146,5 @@ class LSTM_variable_input(torch.nn.Module) :
         return out
 
 model = LSTM_variable_input(vocab_size, 50, 50)
-train_model(model, epochs=30, lr=0.1)    
+train_model(model, epochs=30, lr=0.1)  
+metricsfile.close()  
