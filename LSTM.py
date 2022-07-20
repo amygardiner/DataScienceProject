@@ -160,7 +160,7 @@ metricsfile.close()
 
 plt.plot(epochs_list, train_loss_list, label='Train')
 plt.plot(epochs_list, valid_loss_list, label='Valid')
-plt.xlabel('Global Steps')
+plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.legend()
 plt.show()   
