@@ -1,6 +1,6 @@
-train loss 0.445, val loss 1.656, val accuracy 0.128, and val rmse 0.934 
-train loss 0.344, val loss 1.544, val accuracy 0.506, and val rmse 1.361 
-train loss 0.259, val loss 0.400, val accuracy 0.857, and val rmse 0.378 
-train loss 0.162, val loss 0.371, val accuracy 0.865, and val rmse 0.367 
-train loss 0.105, val loss 0.349, val accuracy 0.875, and val rmse 0.353 
-train loss 0.075, val loss 0.333, val accuracy 0.888, and val rmse 0.335 
+train loss 0.417, val loss 0.369, val accuracy 0.878, and val rmse 0.349 
+train loss 0.305, val loss 0.341, val accuracy 0.876, and val rmse 0.352 
+train loss 0.181, val loss 0.281, val accuracy 0.906, and val rmse 0.306 
+train loss 0.113, val loss 0.279, val accuracy 0.910, and val rmse 0.300 
+train loss 0.085, val loss 0.300, val accuracy 0.909, and val rmse 0.301 
+train loss 0.063, val loss 0.325, val accuracy 0.913, and val rmse 0.295 

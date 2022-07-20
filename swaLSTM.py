@@ -114,8 +114,8 @@ def train_model(model, epochs=10, lr=0.001):
             sum_loss += loss.item()*y.shape[0]
             total += y.shape[0]
         train_loss=sum_loss/total
-        #val_loss, val_acc, val_rmse = validation_metrics(model, val_dl)
-        val_loss, val_acc, val_rmse = validation_metrics(swa_model, val_dl)
+        val_loss, val_acc, val_rmse = validation_metrics(model, val_dl)
+        #val_loss, val_acc, val_rmse = validation_metrics(swa_model, val_dl)
         train_loss_list.append(train_loss)
         valid_loss_list.append(val_loss)
         epochs_list.append(i)
@@ -129,7 +129,6 @@ def train_model(model, epochs=10, lr=0.001):
           scheduler.step()
         
         torch.optim.swa_utils.update_bn(train_dl, swa_model)
-        #preds = swa_model(val_dl)
         
 
 
@@ -174,7 +173,8 @@ class LSTM_variable_input(torch.nn.Module) :
         return out
 
 model = LSTM_variable_input(vocab_size, 50, 50)
-train_model(model, epochs=30, lr=0.1)  
+swa_model = AveragedModel(model)
+train_model(swa_model, epochs=30, lr=0.1)  
 metricsfile.close()
 
 plt.plot(epochs_list, train_loss_list, label='Train')
