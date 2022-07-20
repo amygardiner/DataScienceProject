@@ -8,11 +8,13 @@ import spacy
 from collections import Counter
 from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 import string
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
-from torchcontrib.optim import SWA
+from torch.optim.swa_utils import AveragedModel, SWALR
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 filepath="/Users/amygardiner/Documents/University/PGD/Proj/Data/Paid_labelled/alldata.txt"
 data = pd.read_csv(filepath, sep="\t")
@@ -68,7 +70,7 @@ X = list(data['encoded'])
 y = list(data['label'])
 X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2)
 
-class ReviewsDataset(Dataset):
+class CrisisDataset(Dataset):
     def __init__(self, X, Y):
         self.X = X
         self.y = Y
@@ -79,14 +81,24 @@ class ReviewsDataset(Dataset):
     def __getitem__(self, idx):
         return torch.from_numpy(self.X[idx][0].astype(np.int32)), self.y[idx], self.X[idx][1]
     
-train_ds = ReviewsDataset(X_train, y_train)
-valid_ds = ReviewsDataset(X_valid, y_valid)
+train_ds = CrisisDataset(X_train, y_train)
+valid_ds = CrisisDataset(X_valid, y_valid)
 
-metricsfile = open('swaLSTMmetrics.txt', 'w')
+metricsfile = open('swalstmmetrics.txt', 'w')
+
+train_loss_list = []
+valid_loss_list = []
+epochs_list = []
 
 def train_model(model, epochs=10, lr=0.001):
-    base_opt = torch.optim.SGD(model.parameters(), lr=0.1)
-    optimizer = SWA(base_opt, swa_start=10, swa_freq=5, swa_lr=0.05)
+    parameters = filter(lambda p: p.requires_grad, model.parameters())
+    optimizer = torch.optim.Adam(parameters, lr=lr)
+    
+    swa_model = AveragedModel(model)
+    scheduler = CosineAnnealingLR(optimizer, T_max=100)
+    swa_start = 5
+    swa_scheduler = SWALR(optimizer, swa_lr=0.05)
+    
     for i in range(epochs):
         model.train()
         sum_loss = 0.0
@@ -101,11 +113,25 @@ def train_model(model, epochs=10, lr=0.001):
             optimizer.step()
             sum_loss += loss.item()*y.shape[0]
             total += y.shape[0]
-        #optimizer.swap_swa_sgd()
-        val_loss, val_acc, val_rmse = validation_metrics(model, val_dl)
+        train_loss=sum_loss/total
+        #val_loss, val_acc, val_rmse = validation_metrics(model, val_dl)
+        val_loss, val_acc, val_rmse = validation_metrics(swa_model, val_dl)
+        train_loss_list.append(train_loss)
+        valid_loss_list.append(val_loss)
+        epochs_list.append(i)
+        if i > swa_start:
+          swa_model.update_parameters(model)
+          swa_scheduler.step()
         if i % 5 == 1:
-            s=("train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f \n" % (sum_loss/total, val_loss, val_acc, val_rmse))
+            s=("train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f \n" % (train_loss, val_loss, val_acc, val_rmse))
             metricsfile.write(s)
+        else:
+          scheduler.step()
+        
+        torch.optim.swa_utils.update_bn(train_dl, swa_model)
+        #preds = swa_model(val_dl)
+        
+
 
 def validation_metrics (model, valid_dl):
     model.eval()
@@ -149,4 +175,11 @@ class LSTM_variable_input(torch.nn.Module) :
 
 model = LSTM_variable_input(vocab_size, 50, 50)
 train_model(model, epochs=30, lr=0.1)  
-metricsfile.close()  
+metricsfile.close()
+
+plt.plot(epochs_list, train_loss_list, label='Train')
+plt.plot(epochs_list, valid_loss_list, label='Valid')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()   
