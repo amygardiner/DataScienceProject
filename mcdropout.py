@@ -8,6 +8,7 @@ import spacy
 from collections import Counter
 from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 import string
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from sklearn.model_selection import train_test_split
@@ -83,6 +84,10 @@ valid_ds = CrisisDataset(X_valid, y_valid)
 
 metricsfile = open('mcdropoutmetrics.txt', 'w')
 
+train_loss_list = []
+valid_loss_list = []
+epochs_list = []
+
 def train_model(model, epochs=10, lr=0.001):
     parameters = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = torch.optim.Adam(parameters, lr=lr)
@@ -100,9 +105,13 @@ def train_model(model, epochs=10, lr=0.001):
             optimizer.step()
             sum_loss += loss.item()*y.shape[0]
             total += y.shape[0]
+        train_loss=sum_loss/total
         val_loss, val_acc, val_rmse = validation_metrics(model, val_dl)
+        train_loss_list.append(train_loss)
+        valid_loss_list.append(val_loss)
+        epochs_list.append(i)
         if i % 5 == 1:
-            s=("train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f \n" % (sum_loss/total, val_loss, val_acc, val_rmse))
+            s=("train loss %.3f, val loss %.3f, val accuracy %.3f, and val rmse %.3f \n" % (train_loss, val_loss, val_acc, val_rmse))
             metricsfile.write(s)
 
 def validation_metrics (model, valid_dl):
@@ -147,4 +156,11 @@ class LSTM_variable_input(torch.nn.Module) :
 
 model = LSTM_variable_input(vocab_size, 50, 50)
 train_model(model, epochs=30, lr=0.1)  
-metricsfile.close()  
+metricsfile.close()
+
+plt.plot(epochs_list, train_loss_list, label='Train')
+plt.plot(epochs_list, valid_loss_list, label='Valid')
+plt.xlabel('Global Steps')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()   
