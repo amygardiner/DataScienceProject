@@ -81,7 +81,7 @@ class CrisisDataset(Dataset):
 train_ds = CrisisDataset(X_train, y_train)
 valid_ds = CrisisDataset(X_valid, y_valid)
 
-metricsfile = open('slowLSTMmetrics.txt', 'w')
+metricsfile = open('mcdropoutmetrics.txt', 'w')
 
 def train_model(model, epochs=10, lr=0.001):
     parameters = filter(lambda p: p.requires_grad, model.parameters())
@@ -134,7 +134,7 @@ class LSTM_variable_input(torch.nn.Module) :
         self.hidden_dim = hidden_dim
         self.dropout = nn.Dropout(0.3)
         self.embeddings = nn.Embedding(vocab_size, embedding_dim, padding_idx=0)
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim,num_layers=2, batch_first=True,dropout=0.5)
         self.linear = nn.Linear(hidden_dim, 5)
         
     def forward(self, x, s):
